@@ -1,0 +1,71 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{polyglossia}
+\usepackage{fontenc}
+
+\setmainlanguage{russian}
+\setotherlanguage{english}
+
+\setmainfont{Times New Roman}
+
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools, colortbl}
+
+\usepackage{csquotes} 
+
+\usepackage{wasysym}
+
+
+\renewcommand*{\maketitle}{
+    \begin{titlepage}
+        \begin{center}
+            \linespread{1}
+            \small
+            Федеральное государственное автономное образовательное учреждение\break высшего образования\par
+            <<Московский физико-технический институт \break (национальный исследовательский университет)>>\par
+            Физтех-школа Имени Л.Д.Ландау\par
+            Кафедра инновационной педагогики\par
+        \end{center}
+        \noindent
+        {
+            \small
+            {\bf Направление подготовки / специальность}: 03.03.01 Прикладная математика и физика\newline
+            {\bf Направленность (профиль) подготовки}: Математика и физика
+        }
+
+        {
+            \topskip0pt
+            \vspace*{\fill}
+            \begin{center}
+                {\bf\Large { {{user_data['patronimic']}} }\par}
+                (бакалаврская работа)
+            \end{center}
+            \vspace*{\fill}
+        }
+
+        \hfill
+        \begin{minipage}[t]{8cm}
+            {\bf Студент: \newline}
+            {{user_data['name']}} \newline
+            \vspace{-3mm}
+            \rule{8cm}{0.15mm}
+            \centerline{\scriptsize\it (подпись студента)}\newline
+
+            {\bf Научный руководитель: \newline}
+            {{user_data['surname']}} \newline
+            \vspace{-3mm}
+            \rule{8cm}{0.15mm}
+            \centerline{\scriptsize\it (подпись научного руководителя)}
+        \end{minipage}
+        
+        \vspace*{\fill}
+        \begin{center}
+            Москва 2023
+        \end{center}
+    \end{titlepage}
+}
+
+
+
+\begin{document}
+    \maketitle
+\end{document}
