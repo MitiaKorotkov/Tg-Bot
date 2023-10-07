@@ -22,4 +22,4 @@ def load_config(path: str):
     env = Env()
     env.read_env(path)
 
-    return Config(tg_bot=TgBot(token=env.str('BOT_TOKEN')), misc=Miscellaneous())
+    return Config(tg_bot=TgBot(token=env.str("BOT_TOKEN")), misc=Miscellaneous())
