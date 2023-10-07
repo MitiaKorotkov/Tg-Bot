@@ -6,9 +6,10 @@ from aiogram.filters import StateFilter
 from aiogram.types import Message
 from aiogram import Router
 
-from ..tmp import DESCRIPTION
+from ..global_const import DESCRIPTION
 
 user_router = Router()
+
 
 # Обработчик команды /start
 @user_router.message(CommandStart(), StateFilter(default_state))

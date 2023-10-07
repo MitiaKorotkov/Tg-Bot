@@ -2,7 +2,8 @@ from aiogram import Bot, Dispatcher
 import asyncio
 
 from aiogram import types
-from aiogram.types import InlineKeyboardButton, InputMediaDocument, InputMediaPhoto
+from aiogram.types import InlineKeyboardButton, InputMediaDocument
+from aiogram.types import InputMediaPhoto
 from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -16,86 +17,92 @@ import os
 
 
 class FSMFillPersonalData(StatesGroup):
-    '''
+    """
     Это класс с состояниями машины состояний.
 
     middle_state: состояние ввода персональных данных
     final_state: состояние выхода из машины состояний
-    '''
+    """
+
     middle_state = State()
     final_state = State()
 
 
-class MenuCallbackData(CallbackData, prefix='menu'):
-    '''
+class MenuCallbackData(CallbackData, prefix="menu"):
+    """
     Фабрика коллбэков для навигации по меню. Содержит в себе следущую информацию
 
     level: уровень вложенности меню
     category: текущая категория
     document_id: название текущего документа
-    '''
+    """
 
     level: int
     category: str
     document_name: str
 
 
-class FillDocumentCallbackData(CallbackData, prefix='fill'):
-    '''
+class FillDocumentCallbackData(CallbackData, prefix="fill"):
+    """
     Фабрика коллбэков для заполнения документа. Содержит в себе следущую информацию
 
     category: текущая категория
     document_id: текущий документ
-    '''
+    """
 
     category: str
     document_name: str
 
 
 load_dotenv()
-TOKEN_API = os.getenv('BOT_TOKEN')
+TOKEN_API = os.getenv("BOT_TOKEN")
 
-DESCRIPTION = '''Описание этого бота и его команд'''
-MAIN_MENU_TEXT = '''Вот такие группы заявлений у меня есть'''
-FILES_MENU_TEXT = '''В данном разделе есть следующие файлы'''
-FILE_PAGE_TEXT = '''Вот пустой бланк. Можете заполнить его сами или попросить об этом меня'''
-WITH_FILL_FILE_MESSAGE = '''Вот ваш заполненный файл'''
+DESCRIPTION = """Описание этого бота и его команд"""
+MAIN_MENU_TEXT = """Вот такие группы заявлений у меня есть"""
+FILES_MENU_TEXT = """В данном разделе есть следующие файлы"""
+FILE_PAGE_TEXT = (
+    """Вот пустой бланк. Можете заполнить его сами или попросить об этом меня"""
+)
+WITH_FILL_FILE_MESSAGE = """Вот ваш заполненный файл"""
 
-DIRECTORY_FOR_LATEX_FILES = 'database/tmp_latex_files/'
-DIRECTORY_FOR_TEMPLATES = 'database/templates/'
-DIRECTORY_FOR_PHOTOS = 'database/photos/'
+DIRECTORY_FOR_LATEX_FILES = "database/tmp_latex_files/"
+DIRECTORY_FOR_TEMPLATES = "database/templates/"
+DIRECTORY_FOR_PHOTOS = "database/photos/"
 
-MAIN_MENU_PHOTO = 'main_menu_photo.jpg'
-FILES_MENU_PHOTO = 'submenu_photo.jpg'
-DOWNLOAD_PHOTO = 'download_photo.jpg'
+MAIN_MENU_PHOTO = "main_menu_photo.jpg"
+FILES_MENU_PHOTO = "submenu_photo.jpg"
+DOWNLOAD_PHOTO = "download_photo.jpg"
 
 # Словарь последовательностей токенов для доступных документов.
 # Распололжение токенов в последовательности совпадает с их порядком заполнения
-CHAINS_OF_STATES = {'diploma_cover': ['name', 'surname', 'patronimic', 'final_state'],
-                    'only_text': ['name', 'final_state']
-                    }
+CHAINS_OF_STATES = {
+    "diploma_cover": ["name", "surname", "patronimic", "final_state"],
+    "only_text": ["name", "final_state"],
+}
 
 # Структура меню
-CATEGORIES = {'Category 1': ['diploma_cover'],
-              'Category 2': ['only_text', 'diploma_cover']
-              }
+CATEGORIES = {
+    "Category 1": ["diploma_cover"],
+    "Category 2": ["only_text", "diploma_cover"],
+}
 
 # Словарь для русификации
-LEXICON = {'Category 1': 'Категория 1',
-           'Category 2': 'Категория 2',
-           'Category 3': 'Категория 3',
-           'Category 4': 'Категория 4',
-           'diploma_cover': 'Титульник',
-           'only_text': 'Просто текст',
-           'Back button': 'Назад',
-           'Fill document button': 'Заполнить документ',
-           'wait': 'Пожалуйста, подождите немного, документ готовится',
-           'name': 'имя',
-           'surname': 'фамилию',
-           'patronimic': 'отчество',
-           'birth_date': 'дату рождения',
-           'final_state': 'название документа'
-           }
+LEXICON = {
+    "Category 1": "Категория 1",
+    "Category 2": "Категория 2",
+    "Category 3": "Категория 3",
+    "Category 4": "Категория 4",
+    "diploma_cover": "Титульник",
+    "only_text": "Просто текст",
+    "Back button": "Назад",
+    "Fill document button": "Заполнить документ",
+    "wait": "Пожалуйста, подождите немного, документ готовится",
+    "name": "имя",
+    "surname": "фамилию",
+    "patronimic": "отчество",
+    "birth_date": "дату рождения",
+    "final_state": "название документа",
+}
 
 # Буфферы для id уже загруженных фото и документов
 DOCUMENTS_BUFFER = {}
@@ -109,8 +116,9 @@ KEYBOARD_WIDTH = 3
 bot = Bot(token=TOKEN_API)
 dp = Dispatcher()
 
+
 async def fill_template(user_data: dict, document_name: str):
-    '''
+    """
     Заполняет теховский шаблон данными пользователя и создаёт соответствующий
     .pdf документ.
 
@@ -120,32 +128,33 @@ async def fill_template(user_data: dict, document_name: str):
 
         Возвращаемое значение:
             Возвращает корутину
-    '''
+    """
 
     # С помощью jinja загружаем теховский шаблон из файловой системы и
     # подставляем в нужные места данные пользователя
     environment = Environment(loader=FileSystemLoader(DIRECTORY_FOR_TEMPLATES))
-    template = environment.get_template(f'{document_name}.tex')
+    template = environment.get_template(f"{document_name}.tex")
     filled_file = template.render(user_data=user_data)
 
     # Записываем заполненный шаблон в теховский файл
     filename = f'{DIRECTORY_FOR_LATEX_FILES}file_for_user{user_data["id"]}'
-    with open(f'{filename}.tex', 'w', encoding='utf-8') as file:
+    with open(f"{filename}.tex", "w", encoding="utf-8") as file:
         file.write(filled_file)
 
     # Собираем полученный теховский файл
     subprocess.call(
-        f'xelatex -output-directory={DIRECTORY_FOR_LATEX_FILES} {filename}.tex')
+        f"xelatex -output-directory={DIRECTORY_FOR_LATEX_FILES} {filename}.tex"
+    )
 
     # Очищаем директорию ото всех временных теховских файлов
-    if os.path.isfile(f'{filename}.aux'):
-        os.unlink(f'{filename}.aux')
-    if os.path.isfile(f'{filename}.idx'):
-        os.unlink(f'{filename}.idx')
-    if os.path.isfile(f'{filename}.log'):
-        os.unlink(f'{filename}.log')
-    if os.path.isfile(f'{filename}.tex'):
-        os.unlink(f'{filename}.tex')
+    if os.path.isfile(f"{filename}.aux"):
+        os.unlink(f"{filename}.aux")
+    if os.path.isfile(f"{filename}.idx"):
+        os.unlink(f"{filename}.idx")
+    if os.path.isfile(f"{filename}.log"):
+        os.unlink(f"{filename}.log")
+    if os.path.isfile(f"{filename}.tex"):
+        os.unlink(f"{filename}.tex")
 
 
 # Возвращает список категорий меню
@@ -181,22 +190,26 @@ async def update_document_buffer(key: str, value: str):
 
 
 # Собирает CallbsckData с нужной информацией
-async def make_callback_data(level: int, category: str = '0', document_name: str = '0') -> MenuCallbackData:
+async def make_callback_data(
+    level: int, category: str = "0", document_name: str = "0"
+) -> MenuCallbackData:
     return MenuCallbackData(level=level, category=category, document_name=document_name)
+
 
 # .......................keyboards.....................................#
 
 
 async def make_main_menu_keyboard(**kwargs) -> types.InlineKeyboardMarkup:
-    '''
+    """
     Генерирует инлайн клавиатуру главного меню
 
         Параметры:
             Нет
 
         Возвращаемое значение:
-            keyboardb_builder.as_markup() (InlineKeyboardMarkup): инлайн клавиатура главного меню
-    '''
+            keyboardb_builder.as_markup() (InlineKeyboardMarkup): инлайн
+            клавиатура главного меню
+    """
 
     # Задаём текущий уровень вложенности
     CURRENT_LEVEL = 0
@@ -208,14 +221,17 @@ async def make_main_menu_keyboard(**kwargs) -> types.InlineKeyboardMarkup:
     keyboardb_builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
 
-    # Для каждой категории создаём кнопку и добавляем её в массив кнопок buttons
+    # Для каждой категории создаём кнопку и добавляем её в массив кнопок
+    # buttons
     for category in categories:
         text = LEXICON[category]
-        callback_data = await make_callback_data(level=CURRENT_LEVEL + 1,
-                                                 category=category)
+        callback_data = await make_callback_data(
+            level=CURRENT_LEVEL + 1, category=category
+        )
 
-        buttons.append(InlineKeyboardButton(text=text,
-                                            callback_data=callback_data.pack()))
+        buttons.append(
+            InlineKeyboardButton(text=text, callback_data=callback_data.pack())
+        )
 
     # Собираем клавиатуру требуемой ширины и возвращаем её
     keyboardb_builder.row(*buttons, width=KEYBOARD_WIDTH)
@@ -223,16 +239,19 @@ async def make_main_menu_keyboard(**kwargs) -> types.InlineKeyboardMarkup:
     return keyboardb_builder.as_markup()
 
 
-async def make_files_menu_keyboard(category: str, **kwargs) -> types.InlineKeyboardMarkup:
-    '''
+async def make_files_menu_keyboard(
+    category: str, **kwargs
+) -> types.InlineKeyboardMarkup:
+    """
     Генерирует инлайн клавиатуру меню файлов
 
         Параметры:
             category (str): имя текущего подраздела с файлами
 
         Возвращаемое значение:
-            keyboardb_builder.as_markup() (InlineKeyboardMarkup): инлайн клавиатура меню файлов
-    '''
+            keyboardb_builder.as_markup() (InlineKeyboardMarkup): инлайн
+            клавиатура меню файлов
+    """
 
     # Задаём текущий уровень вложенности
     CURRENT_LEVEL = 1
@@ -244,21 +263,23 @@ async def make_files_menu_keyboard(category: str, **kwargs) -> types.InlineKeybo
     keyboardb_builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
 
-    # Для каждой категории создаём кнопку и добавляем её в массив кнопок buttons
+    # Для каждой категории создаём кнопку и добавляем её в массив кнопок
+    # buttons
     for document in documents:
         text = LEXICON[document]
-        callback_data = await make_callback_data(level=CURRENT_LEVEL + 1,
-                                                 category=category,
-                                                 document_name=document)
+        callback_data = await make_callback_data(
+            level=CURRENT_LEVEL + 1, category=category, document_name=document
+        )
 
-        buttons.append(InlineKeyboardButton(text=text,
-                                            callback_data=callback_data.pack()))
+        buttons.append(
+            InlineKeyboardButton(text=text, callback_data=callback_data.pack())
+        )
 
-    # Создаём кнопку 'Назад' для возврата в главное меню и добавляем её в массив buttons
-    text = 'Назад'
+    # Создаём кнопку 'Назад' для возврата в главное меню и добавляем её в
+    # массив buttons
+    text = "Назад"
     callback_data = await make_callback_data(level=CURRENT_LEVEL - 1)
-    buttons.append(InlineKeyboardButton(text=text,
-                                        callback_data=callback_data.pack()))
+    buttons.append(InlineKeyboardButton(text=text, callback_data=callback_data.pack()))
 
     # Собираем клавиатуру требуемой ширины и возвращаем её
     keyboardb_builder.row(*buttons, width=KEYBOARD_WIDTH)
@@ -266,8 +287,10 @@ async def make_files_menu_keyboard(category: str, **kwargs) -> types.InlineKeybo
     return keyboardb_builder.as_markup()
 
 
-async def make_file_page_keyboard(category: str, document_name: str, **kwargs) -> types.InlineKeyboardMarkup:
-    '''
+async def make_file_page_keyboard(
+    category: str, document_name: str, **kwargs
+) -> types.InlineKeyboardMarkup:
+    """
     Генерирует инлайн клавиатуру на странице конкретного файла
 
         Параметры:
@@ -276,7 +299,7 @@ async def make_file_page_keyboard(category: str, document_name: str, **kwargs) -
 
         Возвращаемое значение:
             keyboardb_builder.as_markup() (InlineKeyboardMarkup): инлайн клавиатура меню файлов
-    '''
+    """
 
     # Задаём текущий уровень вложенности
     CURRENT_LEVEL = 2
@@ -285,35 +308,35 @@ async def make_file_page_keyboard(category: str, document_name: str, **kwargs) -
     keyboardb_builder = InlineKeyboardBuilder()
 
     # Создаём кнопку 'Заполнить документ' для возврата в главное меню и добавляем её в массив buttons
-    text = 'Заполнить документ'
-    callback_data = FillDocumentCallbackData(category=category,
-                                             document_name=document_name)
-    fill_button = InlineKeyboardButton(text=text,
-                                       callback_data=callback_data.pack())
+    text = "Заполнить документ"
+    callback_data = FillDocumentCallbackData(
+        category=category, document_name=document_name
+    )
+    fill_button = InlineKeyboardButton(text=text, callback_data=callback_data.pack())
 
     # Создаём кнопку 'Назад' для возврата в главное меню и добавляем её в массив buttons
-    text = 'Назад'
+    text = "Назад"
     callback_data = await make_callback_data(level=CURRENT_LEVEL - 1, category=category)
-    back_button = InlineKeyboardButton(text=text,
-                                       callback_data=callback_data.pack())
+    back_button = InlineKeyboardButton(text=text, callback_data=callback_data.pack())
 
     # Собираем клавиатуру требуемой ширины и возвращаем её
     keyboardb_builder.row(fill_button, back_button, width=1)
 
     return keyboardb_builder.as_markup()
 
+
 # ................................callback_proccesing.................................#
 
 
 async def main_menu_proceccing(callback: types.CallbackQuery, **kwargs):
-    '''
+    """
     Отрисовывает главное меню, изменяя текст и клавиатуру сообщения,
     от которого пришёл callback запрос (или того, что подано на вход функции),
     на те, что должны отражаться в главном меню.
 
         Параметры:
             callback (CallbackQuery или Message): входящий callback запрос, ведущий в главное меню
-    '''
+    """
 
     # Создаём клавиатуру главного меню
     markup = await make_main_menu_keyboard()
@@ -334,30 +357,33 @@ async def main_menu_proceccing(callback: types.CallbackQuery, **kwargs):
         photo = types.FSInputFile(photo_name, filename=photo_name)
 
     if isinstance(callback, types.CallbackQuery):
-        message = await bot.edit_message_media(chat_id=callback.message.chat.id,
-                                               message_id=callback.message.message_id,
-                                               media=InputMediaPhoto(media=photo,
-                                                                     caption=MAIN_MENU_TEXT),
-                                               reply_markup=markup)
+        message = await bot.edit_message_media(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            media=InputMediaPhoto(media=photo, caption=MAIN_MENU_TEXT),
+            reply_markup=markup,
+        )
     else:
-        message = await bot.send_photo(chat_id=callback.chat.id,
-                                       photo=photo,
-                                       caption=MAIN_MENU_TEXT,
-                                       reply_markup=markup)
+        message = await bot.send_photo(
+            chat_id=callback.chat.id,
+            photo=photo,
+            caption=MAIN_MENU_TEXT,
+            reply_markup=markup,
+        )
 
     if photo_name not in photo_buffer:
         await update_photo_buffer(photo_name, message.photo[-1].file_id)
 
 
 async def files_menu_proceccing(callback: types.CallbackQuery, category: str, **kwargs):
-    '''
+    """
     Отрисовывает меню файлов выбранной категории, изменяя текст и клавиатуру сообщения,
     от которого пришёл callback запрос, на те, что должны отражаться в меню файлов.
 
         Параметры:
             callback (CallbackQuery): входящий callback запрос, ведущий в главное меню
             category (str): выбранный подраздел меню
-    '''
+    """
 
     # Создаём клавиатуру требуемой страницы меню файлов
     markup = await make_files_menu_keyboard(category)
@@ -376,18 +402,21 @@ async def files_menu_proceccing(callback: types.CallbackQuery, category: str, **
     else:
         photo = types.FSInputFile(photo_name, filename=photo_name)
 
-    message = await bot.edit_message_media(chat_id=callback.message.chat.id,
-                                           message_id=callback.message.message_id,
-                                           media=InputMediaPhoto(media=photo,
-                                                                 caption=FILES_MENU_TEXT),
-                                           reply_markup=markup)
+    message = await bot.edit_message_media(
+        chat_id=callback.message.chat.id,
+        message_id=callback.message.message_id,
+        media=InputMediaPhoto(media=photo, caption=FILES_MENU_TEXT),
+        reply_markup=markup,
+    )
 
     if photo_name not in photo_buffer:
         await update_photo_buffer(photo_name, message.photo[-1].file_id)
 
 
-async def file_page_proceccing(callback: types.CallbackQuery, category: str, document_name: str, **kwargs):
-    '''
+async def file_page_proceccing(
+    callback: types.CallbackQuery, category: str, document_name: str, **kwargs
+):
+    """
     Отрисовывает меню конкретного файла, добавляя клавиатуру с надписями 'Назад' и 'Заполнить',
     соответствующий текст и прикрепляя пустой шаблон выбранного файла к сообщению.
 
@@ -396,15 +425,17 @@ async def file_page_proceccing(callback: types.CallbackQuery, category: str, doc
             category (str): выбранный подраздел меню
             document_name (str): название выбранного файла
 
-    '''
+    """
 
     # Создаём клавиатуру под выбранным файлом
-    markup = await make_file_page_keyboard(category=category, document_name=document_name)
+    markup = await make_file_page_keyboard(
+        category=category, document_name=document_name
+    )
 
     # Загружаем буфер подгруженных документов и собираем полное имя файла,
     # который будет прикреплен к сообщению
     documents_buffer = await get_buffer_of_documents()
-    document_name = f'{DIRECTORY_FOR_TEMPLATES}{document_name}.pdf'
+    document_name = f"{DIRECTORY_FOR_TEMPLATES}{document_name}.pdf"
 
     # FIX ME: сделать автоматическую подгрузку файлов перед началом работы бота в буфер
     # и убрать проверку на наличие файла в нём
@@ -417,27 +448,30 @@ async def file_page_proceccing(callback: types.CallbackQuery, category: str, doc
         document = types.FSInputFile(document_name, filename=document_name)
 
     if isinstance(callback, types.CallbackQuery):
-        message = await bot.edit_message_media(chat_id=callback.message.chat.id,
-                                               message_id=callback.message.message_id,
-                                               media=InputMediaDocument(
-                                                   media=document,
-                                                   caption=FILE_PAGE_TEXT),
-                                               reply_markup=markup)
+        message = await bot.edit_message_media(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            media=InputMediaDocument(media=document, caption=FILE_PAGE_TEXT),
+            reply_markup=markup,
+        )
     else:
-        message = await bot.send_document(chat_id=callback.chat.id,
-                                          document=document,
-                                          caption=FILE_PAGE_TEXT,
-                                          reply_markup=markup)
+        message = await bot.send_document(
+            chat_id=callback.chat.id,
+            document=document,
+            caption=FILE_PAGE_TEXT,
+            reply_markup=markup,
+        )
 
     if document_name not in documents_buffer:
         await update_document_buffer(document_name, message.document.file_id)
+
 
 # ................................hendlers.................................#
 
 
 @dp.callback_query(MenuCallbackData.filter())
 async def navigate(callback: types.CallbackQuery, callback_data: MenuCallbackData):
-    '''
+    """
     Функция, обрабатывающая callback запросы от инлайн клавиатуры меню и
     осуществляющая навигацию по этому меню
 
@@ -445,13 +479,14 @@ async def navigate(callback: types.CallbackQuery, callback_data: MenuCallbackDat
             callback (CallbackQuery): принятый callback запрос, отправленный нажатой кнопкой меню
             callback_data (MenuCallbackData): данные, переданные с callback запросом
 
-    '''
+    """
 
     # Создаём словарь соответствий уровня вложенности меню и функций-обработчиков страниц меню
-    levels = {0: main_menu_proceccing,
-              1: files_menu_proceccing,
-              2: file_page_proceccing
-              }
+    levels = {
+        0: main_menu_proceccing,
+        1: files_menu_proceccing,
+        2: file_page_proceccing,
+    }
 
     # Выбираем нужную функцию обработчий по значению уровня вложенности. Уровень
     # получаем из соответствующего поля callback_data
@@ -459,9 +494,11 @@ async def navigate(callback: types.CallbackQuery, callback_data: MenuCallbackDat
 
     # Вызываем выбранную функцию-обработчик, передавая в неё соответствующие данные о разделе меню,
     # выбранном документе и уровне вложенности, которые хранятся в пришедшей callback_data
-    await current_level_function(callback,
-                                 category=callback_data.category,
-                                 document_name=callback_data.document_name)
+    await current_level_function(
+        callback,
+        category=callback_data.category,
+        document_name=callback_data.document_name,
+    )
 
     # Отвечаем на callback запрос
     await callback.answer()
@@ -474,40 +511,46 @@ async def start_command(messege: types.Message):
     await messege.answer(text=DESCRIPTION)
     await main_menu_proceccing(messege)
 
+
 # ..........................FSM..........................................#
 
 
 @dp.callback_query(FillDocumentCallbackData.filter(), StateFilter(default_state))
-async def fill_document(callback: types.CallbackQuery, callback_data: FillDocumentCallbackData, state: FSMContext):
-    '''
+async def fill_document(
+    callback: types.CallbackQuery,
+    callback_data: FillDocumentCallbackData,
+    state: FSMContext,
+):
+    """
     Функция входа в машину состояний. Активируется при callback запросе, содержащим FillDocumentCallbackData callback_data,
     отправляемую при нажатии на кнопку 'Заполнить документ'. Функция инициализирует хранилище для сбора данных, загружает
     последовательность токенов, соответствующую выбранному документу и запускает машину состояний, переводя её во второе
     состояние из этой цепочки.
 
         Параметры:
-            callback (CallbackQuery): 
+            callback (CallbackQuery):
             callback_data (FillDocumentCallbackData):
             state (FSMContext):
 
-    '''
+    """
 
     # Инициализируем словарь с даными пользователя, сохраняя туда информацию, которая потебуется
     # в дальнейшем для возврата в меню и заполнения выбранного зокумента и загружаем его в хранилище
-    user_data = {'chain_of_states': CHAINS_OF_STATES[callback_data.document_name],
-                 'document_name': callback_data.document_name,
-                 'category': callback_data.category,
-                 'id': callback.from_user.id,
-                 'iteration': 0
-                 }
+    user_data = {
+        "chain_of_states": CHAINS_OF_STATES[callback_data.document_name],
+        "document_name": callback_data.document_name,
+        "category": callback_data.category,
+        "id": callback.from_user.id,
+        "iteration": 0,
+    }
     await state.update_data(user_data)
 
     # Устанавливаем следующее состояние для FSM -- первое в цепочке токенов
-    next_state = user_data['chain_of_states'][0]
+    next_state = user_data["chain_of_states"][0]
 
     # Удаляем клавиатуру меню и выводим сообщение с приглашением ввести первый токен из цепочки
     await callback.message.delete_reply_markup()
-    await callback.message.answer(text=f'Введите {LEXICON[next_state]}')
+    await callback.message.answer(text=f"Введите {LEXICON[next_state]}")
 
     # Переводим машину состояний в промежуточное состояние -- состояние ввода данных
     await state.set_state(FSMFillPersonalData.middle_state)
@@ -518,47 +561,50 @@ async def fill_document(callback: types.CallbackQuery, callback_data: FillDocume
 
 @dp.message(StateFilter(FSMFillPersonalData.middle_state))
 async def process_name_sent(message: types.Message, state: FSMContext):
-    '''
+    """
     Считывает введённые пользователем данные, просит ввести пользователя следующий токен
     и переводит FSN в следующее состояние.
 
         Параметры:
             message (types.Message): сообщение от пользователя, с введённым значением предыдущего токена
             state (FSMContext): данные FSM
-    '''
+    """
 
     # Получаем данные пользователя из хранилища
     user_data = await state.get_data()
 
     # Записываем в словарь данных пользователя введённую пользователем информацию о текущем токене
-    current_state = user_data['chain_of_states'][user_data['iteration']]
+    current_state = user_data["chain_of_states"][user_data["iteration"]]
     user_data[current_state] = message.text
 
     # Достаём из цепочки токенов токен, следующий за текущим
-    user_data['iteration'] += 1
-    next_state = user_data['chain_of_states'][user_data['iteration']]
+    user_data["iteration"] += 1
+    next_state = user_data["chain_of_states"][user_data["iteration"]]
 
     # Обновляем данные в хранилище и выводим сообщение с приглашением ввести следующий токен
     await state.update_data(user_data)
-    await message.answer(text=f'Введите {LEXICON[next_state]}')
+    await message.answer(text=f"Введите {LEXICON[next_state]}")
 
     # Переводим FSM в следующее состояние, конечное (если цепочка закончилась)
     # или ввода токенов (если она продолжается)
-    await state.set_state(FSMFillPersonalData.final_state if next_state == 'final_state'
-                          else FSMFillPersonalData.middle_state)
+    await state.set_state(
+        FSMFillPersonalData.final_state
+        if next_state == "final_state"
+        else FSMFillPersonalData.middle_state
+    )
 
 
 @dp.message(StateFilter(FSMFillPersonalData.final_state))
 async def process_final_state_sent(message: types.Message, state: FSMContext):
-    '''
-    Обрабатывает финальное состояние FSM. Создаёт и отправляет пользователю документ, 
-    заполненный его данными и возвращает его в меню документов. Выходит из FSM, 
+    """
+    Обрабатывает финальное состояние FSM. Создаёт и отправляет пользователю документ,
+    заполненный его данными и возвращает его в меню документов. Выходит из FSM,
     переводя её в состояние по умолчанию.
 
         Параметры:
             message (types.Message): сообщение от пользователя, с введённым значением токена -- желаемого имени файла
             state (FSMContext): данные FSM
-    '''
+    """
 
     # Достаём данные пользователя (введённые им ранее) из хранилища и
     # запоминаем название файла для пользователя
@@ -574,34 +620,36 @@ async def process_final_state_sent(message: types.Message, state: FSMContext):
     else:
         photo = types.FSInputFile(photo_name, filename=photo_name)
 
-    message = await bot.send_photo(chat_id=message.chat.id,
-                                   photo=photo,
-                                   caption=LEXICON['wait'])
+    message = await bot.send_photo(
+        chat_id=message.chat.id, photo=photo, caption=LEXICON["wait"]
+    )
 
     if photo_name not in photo_buffer:
         await update_photo_buffer(photo_name, message.photo[-1].file_id)
 
-    await fill_template(user_data=user_data, document_name=user_data['document_name'])
+    await fill_template(user_data=user_data, document_name=user_data["document_name"])
 
     # Cобираем полное имя pdf файла, сгенерированного функцией fill_template
     document_name = f'{DIRECTORY_FOR_LATEX_FILES}file_for_user{user_data["id"]}.pdf'
 
     # Отправляем пользователю сообщение с прикреплённым к нему заполненным файлом
     # При этом меняем его название на то, которое было введено пользователем
-    await bot.send_document(chat_id=message.chat.id,
-                            document=types.FSInputFile(
-                                document_name,
-                                filename=f'{filename}.pdf'),
-                            caption=WITH_FILL_FILE_MESSAGE)
+    await bot.send_document(
+        chat_id=message.chat.id,
+        document=types.FSInputFile(document_name, filename=f"{filename}.pdf"),
+        caption=WITH_FILL_FILE_MESSAGE,
+    )
 
     # Удаляем отправленный файл с компьютера, чтобы не засорять директорию
     if os.path.isfile(document_name):
         os.unlink(document_name)
 
     # Возвращаем пользователя на страницу меню файла, который был заполнен
-    await file_page_proceccing(message,
-                               category=user_data['category'],
-                               document_name=user_data['document_name'])
+    await file_page_proceccing(
+        message,
+        category=user_data["category"],
+        document_name=user_data["document_name"],
+    )
 
     # Очишаем машину состояний (выходим из неё в состояние по умолчанию)
     await state.clear()
@@ -617,5 +665,5 @@ async def main():
     await dp.start_polling(bot)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

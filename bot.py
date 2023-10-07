@@ -8,10 +8,10 @@ from tg_bot.handlers import routers_list
 
 
 async def main():
-    config = load_config('.env')
+    config = load_config(".env")
     storage = MemoryStorage()
 
-    bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
+    bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
     dp = Dispatcher(storage=storage)
 
     dp.include_routers(*routers_list)
@@ -21,9 +21,5 @@ async def main():
     await dp.start_polling(bot)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())
-
-for i in range(10):
-    x=10
-print(x)
